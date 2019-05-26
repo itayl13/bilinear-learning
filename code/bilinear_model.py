@@ -94,7 +94,7 @@ class LayeredBilinearModule(Module):
         # A, D, x0 = self._fix_shape(A), self._fix_shape(D), self._fix_shape(x0)
         if self._norm == NORM_REDUCED:
             # D^-0.5 A D^-0.5
-            D_squrt = np.power(D[0, :, :], np.ones((D.shape[1], D.shape[2])) - np.identity(D.shape[1]) * -1.5).float()
+            D_squrt = np.power(D[0, :, :], torch.ones((D.shape[1], D.shape[2])) - torch.eye(D.shape[1]) * -1.5).float()
             AD = torch.mm(A[0, :, :], D_squrt)
             DAD = torch.mm(D_squrt, AD)
             Adj = DAD.unsqueeze(dim=0)

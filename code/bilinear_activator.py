@@ -5,6 +5,7 @@ from dataset.dataset import BilinearDataset
 from dataset.datset_sampler import ImbalancedDatasetSampler
 from params.parameters import BilinearActivatorParams, LayeredBilinearModuleParams
 from bokeh.plotting import figure, show
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, random_split, SubsetRandomSampler
 from collections import Counter
 import numpy as np
@@ -159,10 +160,42 @@ class BilinearActivator:
         p.line(x_axis, y_axis_test, line_color=color3, legend="test")
         show(p)
 
+    def plot_line_(self, job=LOSS_PLOT):
+        # Matplotlib version of the above.
+        plt.figure()
+        plt.title(self._dataset + " - Dataset - " + job)
+        plt.xlabel("epochs")
+        plt.ylabel(job)
+        color1, color2, color3 = ("yellow", "orange", "red") if job == LOSS_PLOT else ("black", "green", "blue")
+        if job == LOSS_PLOT:
+            y_axis_train = self._loss_vec_train
+            y_axis_dev = self._loss_vec_dev
+            y_axis_test = self._loss_vec_test
+        elif job == AUC_PLOT:
+            y_axis_train = self._auc_vec_train
+            y_axis_dev = self._auc_vec_dev
+            y_axis_test = self._auc_vec_test
+        elif job == ACCURACY_PLOT:
+            y_axis_train = self._accuracy_vec_train
+            y_axis_dev = self._accuracy_vec_dev
+            y_axis_test = self._accuracy_vec_test
+
+        x_axis = list(range(len(y_axis_dev)))
+        plt.plot(x_axis, y_axis_train, color=color1, label="train")
+        plt.plot(x_axis, y_axis_dev, color=color2, label="dev")
+        plt.plot(x_axis, y_axis_test, color=color3, label="test")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    # def _plot_acc_dev(self):
+    #     self.plot_line(LOSS_PLOT)
+    #     self.plot_line(AUC_PLOT)
+    #     self.plot_line(ACCURACY_PLOT)
     def _plot_acc_dev(self):
-        self.plot_line(LOSS_PLOT)
-        self.plot_line(AUC_PLOT)
-        self.plot_line(ACCURACY_PLOT)
+        self.plot_line_(LOSS_PLOT)
+        self.plot_line_(AUC_PLOT)
+        self.plot_line_(ACCURACY_PLOT)
 
     @property
     def model(self):
@@ -257,8 +290,6 @@ class BilinearActivator:
         self._init_loss_and_acc_vec()
         # calc number of iteration in current epoch
         len_data = len(self._balanced_train_loader)
-        ppp = []
-        ttt = []
         for epoch_num in range(self._epochs):
             # calc number of iteration in current epoch
             for batch_index, (A, D, x0, embed, l) in enumerate(self._balanced_train_loader):
@@ -266,16 +297,12 @@ class BilinearActivator:
                 self._model.train()
 
                 output = self._model(A, D, x0, embed)          # calc output of current model on the current batch
-                ppp.append(output.item())
-                ttt.append(l.item())
                 loss = self._loss_func(output.squeeze(dim=0), l.float())             # calculate loss
                 loss.backward()                                 # back propagation
 
                 if (batch_index + 1) % self._batch_size == 0 or (batch_index + 1) == len_data:  # batching
                     self._model.optimizer.step()                # update weights
                     self._model.zero_grad()                     # zero gradients
-                    ppp = []
-                    ttt = []
                 self._print_progress(batch_index, len_data, job=TRAIN_JOB)
             # validate and print progress
             self._validate(self._unbalanced_train_loader, job=TRAIN_JOB)

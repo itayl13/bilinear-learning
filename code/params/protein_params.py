@@ -1,12 +1,8 @@
 from torch.nn.functional import relu, softmax, cross_entropy
 from torch.optim import Adam
-import os
-from betweenness_centrality import BetweennessCentralityCalculator
-from bfs_moments import BfsMomentsCalculator
 from bilinear_model import LayeredBilinearModule
 from dataset.dataset import BilinearDataset
 from dataset.dataset_external_data import ExternalData
-from feature_calculators import FeatureMeta
 from multi_class_bilinear_activator import BilinearMultiClassActivator
 from params.parameters import BilinearDatasetParams, BilinearActivatorParams, BilinearLayerParams, LinearLayerParams, \
     LayeredBilinearModuleParams, DEG, CENTRALITY, BFS, NORM_REDUCED, ExternalDataParams

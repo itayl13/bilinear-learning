@@ -1,15 +1,12 @@
 from torch import sigmoid, tanh
 from torch.optim import Adam
 from torch.nn import functional
-import os
-from betweenness_centrality import BetweennessCentralityCalculator
-from bfs_moments import BfsMomentsCalculator
 from bilinear_activator import BilinearActivator
 from bilinear_model import LayeredBilinearModule
 from dataset.dataset import BilinearDataset
-from feature_calculators import FeatureMeta
 from params.parameters import BilinearDatasetParams, BilinearActivatorParams, BilinearLayerParams, LinearLayerParams, \
-    LayeredBilinearModuleParams, DEG, CENTRALITY, BFS, NORM_REDUCED
+    LayeredBilinearModuleParams, NORM_REDUCED
+from multi_class_bilinear_activator import BilinearMultiClassActivator
 
 # ------------------------------------------------------  REFAEL -------------------------------------------------------
 
@@ -17,8 +14,10 @@ from params.parameters import BilinearDatasetParams, BilinearActivatorParams, Bi
 class RefaelDatasetParams(BilinearDatasetParams):
     def __init__(self):
         super().__init__()
-        self.DATASET_NAME = "Refael_Binary_18_12"
-        self.DATASET_FILENAME = "Refael_18_12_18_Binary.csv"
+        # self.DATASET_NAME = "Refael_Color1_12_18"
+        # self.DATASET_FILENAME = "Refael_Color1_12_18.csv"
+        self.DATASET_NAME = "Refael_Color2_12_18"
+        self.DATASET_FILENAME = "Modified_Refael_Color2_12_18.csv"
         self.SRC_COL = "SourceID"
         self.DST_COL = "DestinationID"
         self.GRAPH_NAME_COL = "Community"
@@ -34,9 +33,11 @@ class RefaelBilinearLayerParams(BilinearLayerParams):
         self.LEFT_LINEAR_ROW_DIM = in_col_dim   # should be equal to RIGHT_LINEAR_IN and FirstLayerModelParams::OUT_DIM
         self.LEFT_LINEAR_COL_DIM = 1            # out rows
         self.RIGHT_LINEAR_ROW_DIM = ftr_len     # should be equal to FirstLayerModelParams::ROW_DIM
-        self.RIGHT_LINEAR_COL_DIM = 1           # out cols
-        self.ACTIVATION_FUNC = sigmoid
-        self.ACTIVATION_FUNC_ARGS = {}
+        self.RIGHT_LINEAR_COL_DIM = 4           # out cols
+        # self.ACTIVATION_FUNC = sigmoid
+        # self.ACTIVATION_FUNC_ARGS = {}
+        self.ACTIVATION_FUNC = functional.softmax
+        self.ACTIVATION_FUNC_ARGS = {"dim": 1}
 
 
 class RefaelLinearLayerParams(LinearLayerParams):
@@ -57,12 +58,12 @@ class RefaelLayeredBilinearModuleParams(LayeredBilinearModuleParams):
         self.OPTIMIZER = Adam
         self.WEIGHT_DECAY = 0
 
-        self.NUM_LAYERS = 2
+        self.NUM_LAYERS = 3
+
         self.LINEAR_PARAMS_LIST = [
             RefaelLinearLayerParams(in_dim=ftr_len, out_dim=50, dropout=self.DROPOUT),
-            RefaelLinearLayerParams(in_dim=50, out_dim=10, dropout=self.DROPOUT),
-            RefaelLinearLayerParams(in_dim=50, out_dim=10, dropout=self.DROPOUT),
-            RefaelLinearLayerParams(in_dim=200, out_dim=1, dropout=self.DROPOUT)
+            RefaelLinearLayerParams(in_dim=50, out_dim=100, dropout=self.DROPOUT),
+            RefaelLinearLayerParams(in_dim=100, out_dim=4, dropout=self.DROPOUT),
         ]
         self.BILINEAR_PARAMS = RefaelBilinearLayerParams(self.LINEAR_PARAMS_LIST[self.NUM_LAYERS - 1].COL_DIM,
                                                          self.LINEAR_PARAMS_LIST[0].ROW_DIM)
@@ -73,13 +74,16 @@ class RefaelBilinearActivatorParams(BilinearActivatorParams):
         super().__init__()
         self.DEV_SPLIT = 0.15
         self.TEST_SPLIT = 0.15
-        self.LOSS = functional.binary_cross_entropy_with_logits  # f.factor_loss  #
+        # self.LOSS = functional.binary_cross_entropy_with_logits  # f.factor_loss
+        self.LOSS = functional.cross_entropy
         self.BATCH_SIZE = 16
         self.EPOCHS = 100
 
 
 if __name__ == '__main__':
     refael_train_ds = BilinearDataset(RefaelDatasetParams())
-    activator = BilinearActivator(LayeredBilinearModule(RefaelLayeredBilinearModuleParams(ftr_len=refael_train_ds.len_features)),
-                                  RefaelBilinearActivatorParams(), refael_train_ds)
-    activator.train()
+    module = LayeredBilinearModule(RefaelLayeredBilinearModuleParams(ftr_len=refael_train_ds.len_features))
+    activator = BilinearMultiClassActivator(module, RefaelBilinearActivatorParams(), refael_train_ds)
+    activator.train(show_plot=True)
+
+

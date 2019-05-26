@@ -1,7 +1,6 @@
 from torch import sigmoid, tanh
 import torch
-from torch.nn.functional import binary_cross_entropy, relu
-from torch.optim import Adam, SGD
+from torch.optim import Adam
 from torch.nn import functional
 import os
 from betweenness_centrality import BetweennessCentralityCalculator

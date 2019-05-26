@@ -2,16 +2,12 @@ from torch import sigmoid
 from torch.nn.functional import relu
 from torch.optim import Adam
 from torch.nn import functional
-import os
-from betweenness_centrality import BetweennessCentralityCalculator
-from bfs_moments import BfsMomentsCalculator
 from bilinear_activator import BilinearActivator
 from bilinear_model import LayeredBilinearModule
 from dataset.dataset import BilinearDataset
 from dataset.dataset_external_data import ExternalData
-from feature_calculators import FeatureMeta
 from params.parameters import BilinearDatasetParams, LayeredBilinearModuleParams, LinearLayerParams, \
-    BilinearLayerParams, BilinearActivatorParams, DEG, CENTRALITY, BFS, NORM_REDUCED, ExternalDataParams
+    BilinearLayerParams, BilinearActivatorParams, CENTRALITY, BFS, NORM_REDUCED, ExternalDataParams
 
 
 # ------------------------------------------------------  AIDS ---------------------------------------------------------
